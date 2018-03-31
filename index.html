@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>EH18</title>
+    <style>
+html,
+body {
+  background: #000;
+  color: #fff;
+  font-family: monospace;
+  text-align: center;
+}
+td {
+  width: 1.5em;
+  height: 1.5em;
+}
+
+table {
+  transition: filter 1s;
+}
+.distort {
+  filter: url('#filter-distort');
+}
+    </style>
+  </head>
+
+  <body>
+    <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0">
+      <defs>
+        <filter id="filter-distort" style="color-interpolation-filters:sRGB;">
+          <feTurbulence id="feTurbulence12" baseFrequency="0.002 0.107" numOctaves="1" />
+          <feColorMatrix id="feColorMatrix14" result="result91" values="2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0.5" />
+          <feDisplacementMap id="feDisplacementMap16" in2="result91" in="SourceGraphic" scale="14.3" xChannelSelector="R" yChannelSelector="A" />
+        </filter>
+      </defs>
+    </svg>
+
+    <table></table>
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+
+    <script>
+cur = 0;
+
+function color(cur, x, y) {
+  for (spec of document.highlight[cur]) {
+    if (y == spec[0] && x >= spec[1] && x < spec[2]) {
+      return '#ffab00';
+    }
+  }
+  return '#fff';
+}
+
+function change() {
+  $('table').find('tr').each(function(y, row) {
+    var row = $(row);
+    $(row).find('td').each(function(x, el) {
+      var el = $(el);
+      var target_text = document.rabbit[cur][y][x];
+      // set color
+      el.css('color', color(cur, x, y));
+      // set text...
+      var i = 0;
+      function foo() {
+        if (el.text() != target_text && i < 10) {
+          var char = Math.random() < 0.2 ? target_text : document.rand_char[Math.floor(Math.random() * document.rand_char.length)];
+          el.text(char);
+          window.setTimeout(foo, 100);
+        } else {
+          el.text(target_text);
+        }
+        i += 1;
+      }
+      foo();
+    });
+  });
+  cur = (cur + 1) % document.rabbit.length;
+  window.setTimeout(change, 5000);
+}
+
+function distort() {
+  $('table').addClass('distort');
+  setTimeout(() => {
+    $('table').removeClass('distort');
+    var timeout = Math.random() > 0.5 ? Math.floor(Math.random() * 100 + 100) : Math.floor(Math.random() * 5000 + 1000);
+    setTimeout(distort, timeout);
+  }, 100);
+}
+
+$(() => {
+  $.getJSON('art.json').then((data) => {
+    // fetch artwork
+    document.highlight = data.highlight;
+    document.rabbit = data.rabbit;
+    document.rand_char = data.rand_char;
+    // create table
+    var row = '<tr>';
+    for (var i = 0; i < document.rabbit[0][0].length; i++) {
+      row += '<td>0<\/td>';
+    }
+    row += '<\/tr>';
+    for (var i = 0; i < document.rabbit[0].length; i++) {
+      $(row).appendTo('table');
+    }
+    // start
+    change();
+    distort();
+  });
+});
+    </script>
+  </body>
+</html>
